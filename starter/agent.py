@@ -4,9 +4,12 @@ import json
 import re
 import sqlite3
 from pathlib import Path
+from typing import NamedTuple
 
 
 TOKEN_RE = re.compile(r"[a-z0-9]+", re.IGNORECASE)
+RERANK_POOL_SIZE = 50
+RERANK_EVIDENCE_WEIGHT = 3.0
 STOPWORDS = {
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from",
     "i", "in", "is", "it", "me", "my", "of", "on", "or", "please", "some",
@@ -16,6 +19,17 @@ STOPWORDS = {
     "preference", "quite", "requirement", "right", "specific", "still", "those",
     "use", "what", "yet", "your",
 }
+
+
+class CandidateRow(NamedTuple):
+    parent_asin: str
+    title: str
+    categories: str
+    features: str
+    details: str
+    store: str
+    description: str
+    lexical_score: float
 
 
 def _text(value: object) -> str:
@@ -39,8 +53,13 @@ def _terms(text: str) -> list[str]:
 class Agent:
     """Deterministic conversational BM25 Agent with no model dependency."""
 
-    def __init__(self, catalog_path: str | Path = "data/catalog.jsonl") -> None:
+    def __init__(
+        self,
+        catalog_path: str | Path = "data/catalog.jsonl",
+        rerank: bool = True,
+    ) -> None:
         self.catalog_path = Path(catalog_path)
+        self.rerank = rerank
         self.connection = sqlite3.connect(":memory:")
         self._sessions: set[str] = set()
         self._session_terms: dict[str, list[str]] = {}
@@ -75,6 +94,30 @@ class Agent:
             cursor.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?)", batch)
         self.connection.commit()
 
+    def _evidence_score(self, row: CandidateRow, query_terms: list[str]) -> float:
+        title_terms = set(_terms(row.title))
+        category_terms = set(_terms(row.categories))
+        detail_terms = set(_terms(f"{row.features} {row.details}"))
+        other_terms = set(_terms(f"{row.store} {row.description}"))
+        matched = 0
+        score = 0.0
+        for term in query_terms:
+            if term in title_terms:
+                score += 4.0
+                matched += 1
+            elif term in detail_terms:
+                score += 2.5
+                matched += 1
+            elif term in category_terms:
+                score += 2.0
+                matched += 1
+            elif term in other_terms:
+                score += 1.0
+                matched += 1
+        if query_terms:
+            score += 4.0 * matched / len(query_terms)
+        return score
+
     def reset(self, session_id: str, user_profile: dict) -> None:
         # The profile is anonymized and may be used for personalization.
         self._sessions.add(session_id)
@@ -95,13 +138,36 @@ class Agent:
         expression = " OR ".join(f'"{term}"' for term in unique_terms)
         if not expression:
             recommendations: list[dict] = []
-        else:
+        elif not self.rerank:
             rows = self.connection.execute(
                 "SELECT parent_asin FROM products WHERE products MATCH ? "
                 "ORDER BY bm25(products, 0.0, 6.0, 4.0, 2.5, 2.5, 1.5, 1.0) LIMIT ?",
                 (expression, top_k),
             ).fetchall()
             recommendations = [{"parent_asin": str(row[0])} for row in rows]
+        else:
+            rows = [
+                CandidateRow(*row)
+                for row in self.connection.execute(
+                    "SELECT parent_asin, title, categories, features, details, store, description, "
+                    "bm25(products, 0.0, 6.0, 4.0, 2.5, 2.5, 1.5, 1.0) AS lexical_score "
+                    "FROM products WHERE products MATCH ? ORDER BY lexical_score LIMIT ?",
+                    (expression, max(top_k, RERANK_POOL_SIZE)),
+                ).fetchall()
+            ]
+            scored = [
+                (
+                    RERANK_EVIDENCE_WEIGHT * self._evidence_score(row, unique_terms) - index,
+                    index,
+                    row,
+                )
+                for index, row in enumerate(rows)
+            ]
+            scored.sort(key=lambda item: (-item[0], item[1]))
+            recommendations = [
+                {"parent_asin": str(row.parent_asin)}
+                for _, _, row in scored[:top_k]
+            ]
         return {
             "message": "Here are the closest matches. What specific requirement matters most?",
             "ask_attribute": "other" if turn <= 4 else None,

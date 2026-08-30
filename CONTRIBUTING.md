@@ -14,6 +14,22 @@ For a full public-set run, place the authorized organizer catalog at `data/catal
 python3 -m evaluator.local_evaluator --output results.json
 ```
 
+Before changing Agent behavior, preserve a local baseline in the other ignored result path:
+
+```bash
+python3 -m evaluator.local_evaluator --output results-reproduced.json
+```
+
+After the change, write the candidate result to `results.json` and compare the two runs:
+
+```bash
+python3 -m evaluator.result_comparison \
+  --baseline results-reproduced.json \
+  --candidate results.json
+```
+
+The comparison reports aggregate deltas plus the exact sessions that were fixed, broken, ranked higher, ranked lower, reached earlier, or reached later. Both result files are ignored and must remain local.
+
 ## Change workflow
 
 1. Create a short-lived branch from `main`.

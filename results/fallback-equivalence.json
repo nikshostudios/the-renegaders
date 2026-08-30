@@ -1,0 +1,14 @@
+{
+  "baseline_ref": "5d748c6bcd7cc20575562eb2c8d10f504ff6f6f3",
+  "candidate_mode": "Agent(catalog_path, rerank=False)",
+  "sample_count": 200,
+  "compared_response_count": 645,
+  "exact_response_mismatches": 0,
+  "response_stream_sha256": "12c9a900e1f0c8c6055d20dfac382b562ff3355a0c18a266107769e61e5f0063",
+  "result_metrics": {
+    "hit_rate_at_10": 0.9,
+    "mrr": 0.564446,
+    "mttc": 3.325,
+    "recommended_technical_score": 0.772834
+  }
+}

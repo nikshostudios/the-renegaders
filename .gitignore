@@ -8,6 +8,8 @@ __pycache__/
 htmlcov/
 results.json
 results-reproduced.json
+/performance.json
+.planning/
 data/catalog.jsonl
 data/catalog.jsonl.gz
 data/releases/

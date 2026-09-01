@@ -45,11 +45,28 @@ python3 -m evaluator.local_evaluator --output results.json
 
 `results.json` is ignored so local runs do not create accidental Git changes. The checked evidence is in [`results/final-verification.json`](results/final-verification.json).
 
+Create an aggregate-only freeze receipt after a full run:
+
+```bash
+python3 -m evaluator.freeze_manifest \
+  --result results.json \
+  --output results/freeze-manifest.json
+```
+
+The receipt hashes the runtime files and complete result without copying per-session records into the checked artifact.
+
 Run the three-scenario headless demo:
 
 ```bash
 python3 demo.py
 ```
+
+## Demo materials
+
+- [`docs/demo_presentation.html`](docs/demo_presentation.html): presentation slides for the recorded demo.
+- [`docs/demo_teleprompter_v2_hackathon.html`](docs/demo_teleprompter_v2_hackathon.html): final teleprompter with adjustable scroll speed.
+- [`docs/demo_recording_plan.md`](docs/demo_recording_plan.md): shot-by-shot recording plan.
+- [`docs/demo_transcript.md`](docs/demo_transcript.md): verified terminal demo transcript.
 
 Measure index construction and response latency separately:
 
@@ -62,14 +79,34 @@ python3 -m evaluator.performance_probe --output performance.json
 ```text
 starter/agent.py                  Agent entry point
 evaluator/local_evaluator.py      Released local evaluator
+evaluator/freeze_manifest.py      Aggregate-only runtime and result receipt
 tests/                            Agent and evaluator unit tests
 data/public_set.jsonl             Released 200-session development set
 docs/overnight_agent_report.md    Method, evidence, cost, and limitations
 docs/agent_api_contract.json      Required Agent response contract
+submission/                       Organizer-facing submission bundle
 results/                          Checked baseline and final public evidence
 ```
 
 The downloaded catalog is deliberately excluded because it is about 60 MB and remains subject to the source dataset's terms. See [`DATA_ATTRIBUTION.md`](DATA_ATTRIBUTION.md).
+
+## Submission bundle
+
+`submission/` is the minimal package an organizer needs to run and understand the
+Agent. It contains `agent.py`, `README.md`, `REPORT.md`, and `requirements.txt`,
+and nothing else. No catalog, dataset, result record, notebook, or internal
+planning material is included.
+
+The released public development set remains intentionally tracked outside the
+bundle at `data/public_set.jsonl`. No private, catalog, organizer-only, or other
+prohibited dataset has been committed.
+
+`submission/agent.py` is byte-identical to `starter/agent.py`. The identity
+check, the bundle hashes, and a prohibited-data scan are recorded in
+[`results/submission-manifest.json`](results/submission-manifest.json) and are
+enforced continuously by `tests/test_submission_package.py`, which also extracts
+the bundle to a temporary directory and runs a protocol-valid synthetic session
+against it with the repository off the import path.
 
 ## How the Agent works
 
@@ -96,5 +133,10 @@ GitHub Actions runs the catalog-free unit suite on every push and pull request. 
 - The Agent is lexical, so products with generic category and material descriptions remain difficult to distinguish.
 - Intent updates add new evidence but do not fully delete every earlier preference. The public Intent Override result is 0.900000, but the demo and report do not claim complete natural-language negation handling.
 - The selected reranking weight was chosen from a bounded experiment on the released public set. The organizer's private set may respond differently.
-- One local 200-session timing probe recorded a 1.485-second index build, 22.68 ms p50 response latency, and 49.35 ms p95 response latency. Timing varies by host.
+- Post-freeze experiments with candidate pools of 100 and 200 produced no session changes. A two-route query prototype and a common-term discount prototype both reduced the public score, so neither entered the Agent.
+- One local 200-session timing probe recorded a 1.485-second index build, 22.68
+  ms p50 response latency, and 49.35 ms p95 response latency. A later rerun on
+  the same Python and SQLite versions recorded a 2.654-second index build,
+  46.49 ms p50, and 179.66 ms p95 while preserving the 0.808740 technical
+  score. These measurements vary with host load and are not guarantees.
 - No private sessions, user interface, multimodal behavior, real transactions, or live model behavior has been tested.

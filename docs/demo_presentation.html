@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Renegaders, TechJam 2026 demo</title>
+<style>
+:root{
+  --bg:#010101;
+  --surface:#121212;
+  --surface-2:#1d1d1d;
+  --gold:#25f4ee;
+  --gold-soft:rgba(37,244,238,.11);
+  --teal:#25f4ee;
+  --teal-bright:#fe2c55;
+  --text:#f8f8f8;
+  --muted:#aaa;
+  --line:rgba(255,255,255,.13);
+  --risk:#fe2c55;
+  --content:1080px;
+  --display:Georgia,"Times New Roman",serif;
+  --body:Calibri,Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg);scrollbar-width:thin;scrollbar-color:#3b3b3b transparent}
+body{
+  margin:0;min-width:320px;color:var(--text);font-family:var(--body);font-size:17px;line-height:1.55;
+  background:
+    radial-gradient(circle at 84% 7%,rgba(37,244,238,.12),transparent 28%),
+    radial-gradient(circle at 8% 74%,rgba(254,44,85,.12),transparent 31%),
+    var(--bg);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitchTiles'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+button{font:inherit}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+::selection{background:var(--gold);color:var(--bg)}
+
+.orb{position:fixed;z-index:0;border-radius:50%;filter:blur(110px);pointer-events:none;opacity:.42}
+.orb.one{width:42vw;height:42vw;right:-17vw;top:-17vw;background:rgba(37,244,238,.28);animation:floatOne 32s ease-in-out infinite alternate}
+.orb.two{width:38vw;height:38vw;left:-16vw;bottom:-18vw;background:rgba(254,44,85,.27);animation:floatTwo 40s ease-in-out infinite alternate}
+@keyframes floatOne{to{transform:translate(-6vw,9vh) scale(1.1)}}
+@keyframes floatTwo{to{transform:translate(8vw,-7vh) scale(.92)}}
+
+.launch-intro{
+  position:fixed;inset:0;z-index:120;overflow:hidden;pointer-events:none;opacity:0;visibility:hidden;
+  background:
+    radial-gradient(circle at 72% 24%,rgba(37,244,238,.18),transparent 27%),
+    radial-gradient(circle at 28% 78%,rgba(254,44,85,.18),transparent 30%),
+    #010101;
+}
+.launch-intro.run{animation:introScene 2800ms var(--ease) both}
+.launch-grid{
+  position:absolute;inset:0;opacity:.2;
+  background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);
+  background-size:68px 68px;mask-image:linear-gradient(to bottom,transparent,black 30%,black 72%,transparent);
+}
+.launch-lockup{position:absolute;inset:0;display:grid;place-content:center;text-align:center;opacity:0;transform:translateY(18px)}
+.launch-intro.run .launch-lockup{animation:lockupReveal 1900ms 120ms var(--ease) both}
+.launch-eyebrow{color:var(--gold);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase}
+.glitch-title{position:relative;display:block;margin-top:12px;color:var(--text);font-family:var(--display);font-size:clamp(42px,7vw,90px);font-weight:500;letter-spacing:-.035em;line-height:1}
+.glitch-title::before,.glitch-title::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none}
+.glitch-title::before{z-index:-1;color:var(--gold);transform:translate(-5px,2px)}
+.glitch-title::after{z-index:-2;color:var(--teal-bright);transform:translate(5px,-2px)}
+.launch-intro.run .glitch-title::before{animation:cyanSplit 900ms 2 steps(2,end)}
+.launch-intro.run .glitch-title::after{animation:pinkSplit 900ms 2 steps(2,end)}
+.tiktok-loader{position:relative;width:min(300px,66vw);height:11px;margin:38px auto 0;border-radius:999px;background:#fff;box-shadow:-7px 0 0 var(--gold),7px 0 0 var(--teal-bright);overflow:hidden}
+.tiktok-loader span{display:block;width:42%;height:100%;border:2px solid #fff;border-radius:inherit;background:linear-gradient(90deg,var(--gold),#fff 52%,var(--teal-bright));transform:translateX(-115%)}
+.launch-intro.run .tiktok-loader span{animation:loadingSweep 1450ms 320ms cubic-bezier(.6,0,.35,1) both}
+.swipe-cards{position:absolute;inset:0;pointer-events:none}
+.swipe-cards i{position:absolute;width:78px;height:116px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:linear-gradient(155deg,rgba(37,244,238,.16),rgba(254,44,85,.08));opacity:0}
+.swipe-cards i:first-child{left:12%;bottom:-18%;transform:rotate(-8deg)}
+.swipe-cards i:nth-child(2){right:13%;top:-18%;transform:rotate(7deg)}
+.launch-intro.run .swipe-cards i:first-child{animation:cardSwipeUp 1500ms 150ms var(--ease) both}
+.launch-intro.run .swipe-cards i:nth-child(2){animation:cardSwipeDown 1500ms 260ms var(--ease) both}
+@keyframes introScene{0%,76%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@keyframes lockupReveal{0%{opacity:0;transform:translateY(18px)}35%,78%{opacity:1;transform:none}100%{opacity:.86;transform:none}}
+@keyframes cyanSplit{0%,100%{transform:translate(-5px,2px)}33%{transform:translate(-12px,-2px)}66%{transform:translate(-2px,5px)}}
+@keyframes pinkSplit{0%,100%{transform:translate(5px,-2px)}33%{transform:translate(3px,6px)}66%{transform:translate(13px,-4px)}}
+@keyframes loadingSweep{0%{transform:translateX(-115%)}55%{width:58%}100%{width:42%;transform:translateX(245%)}}
+@keyframes cardSwipeUp{0%{opacity:0;translate:0 0}38%{opacity:.5}100%{opacity:0;translate:0 -125vh}}
+@keyframes cardSwipeDown{0%{opacity:0;translate:0 0}38%{opacity:.45}100%{opacity:0;translate:0 125vh}}
+
+main{
+  position:relative;z-index:1;width:min(var(--content),calc(100% - 250px));margin:0 auto;padding:26px 0 170px;
+}
+.masthead{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:30px;padding:0 2px 18px;
+  color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1px solid var(--line);
+}
+.masthead strong{font-family:var(--body);font-size:15px;letter-spacing:.03em;text-transform:none;color:var(--text)}
+.verified{display:inline-flex;align-items:center;gap:8px}
+.verified::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 15px rgba(37,244,238,.72)}
+
+.slide{
+  position:relative;min-height:min(760px,82vh);margin:0 0 180px;padding:clamp(42px,5vw,68px);
+  display:flex;align-items:center;overflow:hidden;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:20px;
+  background:linear-gradient(150deg,rgba(20,20,20,.96),rgba(7,7,7,.98));
+  box-shadow:0 26px 70px -42px rgba(0,0,0,.95),inset 0 1px rgba(255,255,255,.025);
+  scroll-margin-top:24px;isolation:isolate;
+}
+.slide::after{content:"";position:absolute;inset:auto -18% -45% auto;width:60%;height:75%;background:radial-gradient(circle,rgba(37,244,238,.09),transparent 66%);z-index:-1}
+.slide:nth-of-type(even)::after{inset:-42% auto auto -20%;background:radial-gradient(circle,rgba(254,44,85,.11),transparent 65%)}
+.slide:last-of-type{margin-bottom:0}
+.slide.in-view{border-color:rgba(37,244,238,.38);border-left-color:var(--gold);box-shadow:0 26px 70px -42px rgba(0,0,0,.95),0 0 30px rgba(37,244,238,.06),inset 0 1px rgba(255,255,255,.025)}
+.wrap{width:100%;max-width:980px;margin:0 auto}
+.card-num{position:absolute;top:19px;left:24px;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.13em}
+.kicker{display:block;margin-bottom:22px;color:var(--gold);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+h1,h2{font-family:var(--display);font-weight:500;letter-spacing:-.025em;line-height:1.04;margin:0}
+h1{font-size:clamp(48px,7vw,92px);max-width:13ch}
+h2{font-size:clamp(38px,5.2vw,68px);max-width:17ch}
+h3{font-size:16px;margin:0 0 8px}
+.lead{max-width:66ch;margin:25px 0 0;color:#d2d2d2;font-size:clamp(19px,2vw,25px);line-height:1.5}
+.accent{color:var(--gold)}
+.teal{color:var(--teal-bright)}
+.mono{font-family:var(--mono)}
+.fine{color:var(--muted);font-size:13px}
+
+.request{
+  margin-top:38px;padding:28px 30px;border:1px solid rgba(37,244,238,.34);border-radius:14px;background:var(--gold-soft);
+  font-family:var(--display);font-size:clamp(29px,4vw,52px);line-height:1.15;
+}
+.request::before{content:"Customer";display:block;margin-bottom:10px;color:var(--gold);font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+
+.baseline-grid,.metric-grid,.mechanism-grid{display:grid;gap:14px;margin-top:34px}
+.baseline-grid{grid-template-columns:1fr 1fr}
+.baseline-card,.metric,.mechanism{
+  position:relative;padding:24px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025);
+}
+.baseline-card.current{border-color:rgba(254,44,85,.48);background:rgba(254,44,85,.08)}
+.baseline-card .label,.metric .label{color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.baseline-card .number{margin-top:12px;font-family:var(--display);font-size:clamp(54px,8vw,92px);line-height:.95}
+.baseline-card.current .number{color:var(--teal-bright)}
+.baseline-card p{margin:12px 0 0;color:var(--muted)}
+.bar{height:7px;margin-top:20px;border-radius:99px;background:#292929;overflow:hidden}
+.bar span{display:block;width:var(--score);height:100%;border-radius:inherit;background:var(--gold);transform-origin:left;transform:scaleX(0);transition:transform 900ms var(--ease)}
+.current .bar span{background:var(--teal-bright)}
+.slide.in-view .bar span{transform:scaleX(1)}
+
+.terminal-card{margin-top:34px;border:1px solid #343434;border-radius:14px;background:#050505;overflow:hidden;box-shadow:0 22px 50px -34px #000}
+.terminal-head{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid #282828;color:#969696;font-family:var(--mono);font-size:11px}
+.dots{display:flex;gap:6px}.dots i{width:9px;height:9px;border-radius:50%;background:#5a5b56}.dots i:first-child{background:#b9695a}.dots i:nth-child(2){background:#c89b58}.dots i:nth-child(3){background:#57947e}
+.terminal-body{padding:24px;font-family:var(--mono);font-size:clamp(14px,1.6vw,18px);line-height:1.7;color:#e2e2e2}
+.prompt{color:var(--teal-bright)}
+.command{color:var(--text)}
+.terminal-note{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-top:24px;padding:16px 18px;border:1px solid rgba(37,244,238,.27);border-radius:10px;background:var(--gold-soft);color:#ddd}
+.terminal-note b{color:var(--gold);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+
+.mechanism-grid{grid-template-columns:repeat(4,1fr)}
+.mechanism{min-height:190px;opacity:.35;transform:translateY(12px);transition:opacity 380ms var(--ease),transform 380ms var(--ease),border-color 380ms var(--ease)}
+.mechanism.on{opacity:1;transform:none;border-color:rgba(37,244,238,.44)}
+.mechanism .index{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(37,244,238,.52);border-radius:50%;color:var(--gold);font-family:var(--mono);font-size:12px}
+.mechanism h3{margin-top:24px}.mechanism p{margin:8px 0 0;color:var(--muted);font-size:15px}
+.flow-line{height:2px;margin:28px 0;background:linear-gradient(90deg,var(--teal),var(--gold),var(--teal));transform-origin:left;transform:scaleX(0);transition:transform 1.2s var(--ease)}
+.flow-run .flow-line{transform:scaleX(1)}
+
+.metric-grid{grid-template-columns:repeat(4,1fr)}
+.metric .value{margin-top:14px;color:var(--gold);font-family:var(--display);font-size:clamp(38px,5vw,62px);line-height:1}
+.metric .context{margin-top:9px;color:var(--muted);font-size:13px}
+.comparison{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin-top:30px}
+.comparison .line{height:1px;background:linear-gradient(90deg,var(--risk),var(--gold),var(--teal-bright))}
+.comparison strong:first-child{color:var(--risk)}
+.comparison strong:last-child{color:var(--teal-bright)}
+
+.proof-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
+.proof-item{padding:22px;border-top:2px solid var(--gold);background:rgba(255,255,255,.025)}
+.proof-item strong{display:block;font-family:var(--display);font-size:clamp(28px,4vw,46px);font-weight:500}
+.proof-item span{display:block;margin-top:6px;color:var(--muted)}
+.honesty{margin-top:30px;padding:18px 20px;border-left:3px solid var(--teal-bright);background:rgba(254,44,85,.08);color:#ddd}
+
+.actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:28px}
+.action{
+  border:1px solid rgba(37,244,238,.5);border-radius:3px;padding:11px 17px;background:transparent;color:var(--gold);
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all 180ms var(--ease);
+}
+.action:hover{background:var(--gold);color:var(--bg)}
+.caption{color:var(--muted);font-family:var(--mono);font-size:11px}
+
+.wave-rail{position:fixed;right:22px;top:50%;z-index:35;width:178px;transform:translateY(-50%)}
+.wave-caption{text-align:right;margin-bottom:15px}.wave-caption span,.wave-caption strong{display:block}.wave-caption span{color:var(--muted);font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase}.wave-caption strong{margin-top:6px;color:var(--gold);font-family:var(--display);font-size:22px;font-weight:500}
+.wave-track{display:grid;gap:5px;width:82px;margin-left:auto}
+.wave-dash{position:relative;height:18px;border:0;background:transparent;cursor:pointer}
+.wave-dash::after{content:"";position:absolute;top:50%;right:0;width:18px;height:1.5px;background:#5d5d5d;transform-origin:right;transform:scaleX(1);transition:all 220ms var(--ease)}
+.wave-dash.active::after{width:58px;background:var(--gold);box-shadow:0 0 14px rgba(37,244,238,.55)}
+
+.toolbar{
+  position:fixed;left:50%;bottom:18px;z-index:60;display:flex;align-items:center;gap:8px;padding:8px;
+  transform:translateX(-50%);border:1px solid var(--line);border-radius:999px;background:rgba(8,8,8,.92);backdrop-filter:blur(12px);box-shadow:0 14px 40px rgba(0,0,0,.45);
+}
+.toolbar button{width:38px;height:38px;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}.toolbar button:hover{background:var(--surface-2);color:var(--text)}
+.toolbar .wide{width:auto;padding:0 13px;border-radius:999px;font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase}
+.counter{min-width:64px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px}
+
+.speaker-notes{display:none}
+body.notes-open .slide.in-view .speaker-notes{
+  display:block;position:fixed;left:18px;bottom:76px;z-index:70;width:min(520px,calc(100vw - 36px));max-height:42vh;overflow:auto;
+  padding:18px 20px;border:1px solid rgba(37,244,238,.52);border-radius:12px;background:rgba(5,5,5,.97);box-shadow:0 22px 60px rgba(0,0,0,.6);
+}
+.speaker-notes .cue{display:inline-flex;margin-bottom:10px;padding:5px 8px;border-radius:999px;background:var(--gold-soft);color:var(--gold);font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
+.speaker-notes p{margin:0;color:#e0e0e0;font-size:14px}.speaker-notes p+p{margin-top:9px}
+body.clean-mode .toolbar,body.clean-mode .wave-rail,body.clean-mode .masthead{display:none}
+body.clean-mode main{padding-top:4vh}
+body.clean-mode .slide{min-height:92vh;margin-bottom:8vh}
+
+.keyboard-help{position:fixed;inset:0;z-index:100;display:none;place-items:center;background:rgba(1,1,1,.82);backdrop-filter:blur(8px)}
+.keyboard-help.open{display:grid}
+.help-card{width:min(560px,calc(100% - 32px));padding:30px;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:16px;background:var(--surface)}
+.help-card h2{font-size:34px}.keys{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin-top:24px}.keys kbd{justify-self:start;padding:4px 8px;border:1px solid #494949;border-radius:5px;background:#202020;font-family:var(--mono);font-size:11px}.keys span{color:var(--muted)}
+
+@media(max-width:980px){main{width:min(880px,calc(100% - 42px))}.wave-rail{display:none}.mechanism-grid,.metric-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){h1,h2,.request{overflow-wrap:anywhere}.slide{min-height:auto;padding:58px 24px 34px;margin-bottom:70px}.baseline-grid,.mechanism-grid,.metric-grid,.proof-row{grid-template-columns:1fr}.masthead{align-items:flex-start;flex-direction:column}.toolbar .wide{display:none}.terminal-note{grid-template-columns:1fr}.comparison{grid-template-columns:1fr;text-align:center}.comparison .line{width:100%}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.orb,.launch-intro,.launch-lockup,.glitch-title::before,.glitch-title::after,.tiktok-loader span,.swipe-cards i{animation:none!important}.mechanism,.bar span,.flow-line{transition:none}}
+@media print{.wave-rail,.toolbar,.speaker-notes,.orb,.keyboard-help{display:none!important}main{width:100%;padding:0}.slide{break-after:page;min-height:92vh;margin:0;border-radius:0;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="launch-intro run" id="launch-intro" aria-hidden="true">
+  <div class="launch-grid"></div>
+  <div class="swipe-cards"><i></i><i></i></div>
+  <div class="launch-lockup"><span class="launch-eyebrow">TechJam 2026 · Track 4</span><strong class="glitch-title" data-text="The Renegaders">The Renegaders</strong><div class="tiktok-loader"><span></span></div></div>
+</div>
+<div class="orb one"></div>
+<div class="orb two"></div>
+
+<aside class="wave-rail" aria-label="Presentation navigation">
+  <div class="wave-caption"><span id="wave-shot">Shot 1</span><strong id="wave-title">The request</strong></div>
+  <nav class="wave-track" id="wave-track"></nav>
+</aside>
+
+<main id="deck">
+  <header class="masthead"><strong>The Renegaders</strong><span>TechJam 2026 · Track 4</span><span class="verified">Public result verified locally</span></header>
+
+  <section class="slide" id="shot-1" data-title="The request" data-shot="Shot 1">
+    <span class="card-num">01</span>
+    <div class="wrap">
+      <span class="kicker">The customer gives us almost nothing</span>
+      <h1>One sentence. <span class="accent">50,000 products.</span></h1>
+      <div class="request">“I need a wallet.”</div>
+      <p class="lead">Searching for wallets is easy. The hard part is asking for one useful detail, remembering it, and using it to narrow the results.</p>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Camera · full-screen face</span><p>Here is the entire customer brief: “I need a wallet.” That is it.</p><p>No brand, no material, no colour, no price. And somewhere inside fifty thousand products is the one they actually want. So rather than tell you our agent understands shopping intent, here is the whole conversation running end to end.</p></aside>
+  </section>
+
+  <section class="slide" id="shot-2" data-title="The baseline" data-shot="Shot 2">
+    <span class="card-num">02</span>
+    <div class="wrap">
+      <span class="kicker">Released public development set</span>
+      <h2>The starter found <span class="accent">25 targets</span> in 200 sessions.</h2>
+      <div class="baseline-grid">
+        <article class="baseline-card"><span class="label">Official starter</span><div class="number">25</div><p>targets found out of 200</p><div class="bar" style="--score:12.5%"><span></span></div></article>
+        <article class="baseline-card current"><span class="label">The Renegaders</span><div class="number">187</div><p>targets found out of 200</p><div class="bar" style="--score:93.5%"><span></span></div></article>
+      </div>
+      <p class="lead">We focused on the conversation first: keep the original request, ask for useful detail, and rank with all the evidence collected so far.</p>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Screen · HTML slide</span><p>Before I run it, one number, just so you know where we started.</p><p>The starter found 25 targets out of 200 released public sessions. Finding wallets was only the first step. The system still had to carry the conversation forward.</p></aside>
+  </section>
+
+  <section class="slide" id="shot-3" data-title="Live session" data-shot="Shot 3">
+    <span class="card-num">03</span>
+    <div class="wrap">
+      <span class="kicker">The proof is a real run</span>
+      <h2>Leave this slide and run the <span class="accent">live terminal demo.</span></h2>
+      <div class="terminal-card">
+        <div class="terminal-head"><span class="dots"><i></i><i></i><i></i></span><span>Terminal</span></div>
+        <div class="terminal-body"><span class="prompt">$</span> <span class="command">python3 demo.py --top-k 3</span></div>
+      </div>
+      <div class="terminal-note"><b>Recording cue</b><span>Switch to the terminal. Show the actual conversation and recommendations. Do not replace it with an animation.</span></div>
+      <div class="actions"><button class="action" type="button" data-copy="python3 demo.py --top-k 3">Copy command</button><span class="caption" id="copy-caption">Return to this deck after the live run</span></div>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Screen · full terminal · no face bubble</span><p>The first message gives the agent the shopping job. The matches are wallets, and it asks what requirement matters most.</p><p>Then give it “leather, black.” Point out that you never repeat wallet. The second message gives it the judgment, and the agent keeps both. Do not claim that a displayed recommendation is the hidden target.</p></aside>
+  </section>
+
+  <section class="slide" id="shot-4" data-title="How it works" data-shot="Shot 4">
+    <span class="card-num">04</span>
+    <div class="wrap">
+      <span class="kicker">Deterministic retrieval and reranking</span>
+      <h2>Four small mechanisms. <span class="accent">One useful conversation.</span></h2>
+      <div class="mechanism-grid" id="mechanism-grid">
+        <article class="mechanism"><span class="index">1</span><h3>Remember</h3><p>Useful product terms remain active across turns.</p></article>
+        <article class="mechanism"><span class="index">2</span><h3>Clarify</h3><p>The opening turns ask for concrete requirements.</p></article>
+        <article class="mechanism"><span class="index">3</span><h3>Filter</h3><p>Conversation filler is removed before retrieval.</p></article>
+        <article class="mechanism"><span class="index">4</span><h3>Rerank</h3><p>Title and product-field evidence determine the final order.</p></article>
+      </div>
+      <div class="flow-line"></div>
+      <div class="actions"><button class="action" id="run-flow" type="button">Run the flow</button><span class="caption">Click once as each mechanism is narrated</span></div>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Screen · HTML slide · face optional</span><p>Now, underneath that, four small things are happening. It keeps useful words, asks for the missing detail, drops filler, and reranks the same catalog.</p><p>The same conversation gives the same result every time. There is no model call behind it, and the customer does not have to start again.</p></aside>
+  </section>
+
+  <section class="slide" id="shot-5" data-title="Verified result" data-shot="Shot 5">
+    <span class="card-num">05</span>
+    <div class="wrap">
+      <span class="kicker">Complete 200-session public evaluation</span>
+      <h2>The agent found <span class="accent">187 of 200</span> targets.</h2>
+      <div class="metric-grid">
+        <article class="metric"><span class="label">Hit Rate@10</span><div class="value">0.935</div><div class="context">187 successful sessions</div></article>
+        <article class="metric"><span class="label">MRR</span><div class="value">0.600</div><div class="context">Target rank quality</div></article>
+        <article class="metric"><span class="label">MTTC</span><div class="value">2.945</div><div class="context">Average turns to target</div></article>
+        <article class="metric"><span class="label">Technical score</span><div class="value">0.809</div><div class="context">Exact: 0.808740</div></article>
+      </div>
+      <div class="comparison"><strong>25 starter</strong><span class="line"></span><strong>187 final</strong></div>
+      <p class="fine">All figures use the released 200-session public development set. Private-set performance is unknown.</p>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Screen · HTML slide</span><p>Alright, that is one conversation. So then we ran all 200 released public sessions.</p><p>The starter found 25 targets. This agent found 187. Hit Rate at 10 is 0.935, the technical score is 0.808740, and the average time to target is 2.945 turns. Changes that made the score worse did not make it into this agent.</p></aside>
+  </section>
+
+  <section class="slide" id="shot-6" data-title="What we can prove" data-shot="Shot 6">
+    <span class="card-num">06</span>
+    <div class="wrap">
+      <span class="kicker">Cost, speed, and honest limits</span>
+      <h2>Small enough to run locally. <span class="teal">Measured end to end.</span></h2>
+      <div class="proof-row">
+        <article class="proof-item"><strong>0</strong><span>model tokens</span></article>
+        <article class="proof-item"><strong>$0</strong><span>API cost</span></article>
+        <article class="proof-item"><strong>None</strong><span>network calls</span></article>
+      </div>
+      <div class="honesty">These are public development results. We have not seen the private set. What we can prove is that the complete public result reproduced exactly.</div>
+      <div class="actions"><button class="action" type="button" data-go="0">Back to the opening</button><span class="caption">End on camera, not on the slide</span></div>
+    </div>
+    <aside class="speaker-notes"><span class="cue">Camera · full-screen face</span><p>The demo and the evidence are two different things. Zero model tokens, zero API cost, and no network call. Local timing varied with machine load.</p><p>These are public development results. We have not seen the private set. The customer added two words, and the agent knew what those two words belonged to. That is the whole thing.</p></aside>
+  </section>
+</main>
+
+<nav class="toolbar" aria-label="Presentation controls">
+  <button type="button" id="prev" aria-label="Previous slide">←</button>
+  <span class="counter" id="counter">1 / 6</span>
+  <button class="wide" type="button" id="notes">Notes</button>
+  <button class="wide" type="button" id="clean">Clean</button>
+  <button class="wide" type="button" id="replay-intro">Intro</button>
+  <button class="wide" type="button" id="fullscreen">Full screen</button>
+  <button type="button" id="next" aria-label="Next slide">→</button>
+</nav>
+
+<div class="keyboard-help" id="keyboard-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-card"><h2 id="help-title">Keyboard controls</h2><div class="keys"><kbd>← →</kbd><span>Previous or next shot</span><kbd>N</kbd><span>Toggle speaker notes</span><kbd>C</kbd><span>Toggle clean recording mode</span><kbd>R</kbd><span>Replay opening animation</span><kbd>F</kbd><span>Toggle full screen</span><kbd>H</kbd><span>Show or hide this help</span><kbd>Esc</kbd><span>Close notes or help</span></div></div>
+</div>
+
+<script>
+(function(){
+  const slides=Array.from(document.querySelectorAll('.slide'));
+  const waveTrack=document.getElementById('wave-track');
+  const waveShot=document.getElementById('wave-shot');
+  const waveTitle=document.getElementById('wave-title');
+  const counter=document.getElementById('counter');
+  const help=document.getElementById('keyboard-help');
+  const intro=document.getElementById('launch-intro');
+  let current=0;
+
+  const navButtons=slides.map(function(slide,index){
+    const button=document.createElement('button');
+    button.type='button';button.className='wave-dash';
+    button.setAttribute('aria-label',(slide.dataset.shot||'Shot')+': '+slide.dataset.title);
+    button.addEventListener('click',function(){go(index)});
+    waveTrack.appendChild(button);return button;
+  });
+
+  function go(index){
+    current=Math.max(0,Math.min(slides.length-1,index));
+    slides[current].scrollIntoView({behavior:'smooth',block:'start'});
+    update(current);
+  }
+  function update(index){
+    current=index;
+    slides.forEach(function(slide,i){slide.classList.toggle('in-view',i===index)});
+    navButtons.forEach(function(button,i){button.classList.toggle('active',i===index);if(i===index)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current')});
+    const slide=slides[index];
+    waveShot.textContent=slide.dataset.shot||('Shot '+(index+1));
+    waveTitle.textContent=slide.dataset.title||'';
+    counter.textContent=(index+1)+' / '+slides.length;
+  }
+
+  const observer=new IntersectionObserver(function(entries){
+    const visible=entries.filter(function(entry){return entry.isIntersecting}).sort(function(a,b){return b.intersectionRatio-a.intersectionRatio})[0];
+    if(visible)update(slides.indexOf(visible.target));
+  },{threshold:[.35,.55,.75]});
+  slides.forEach(function(slide){observer.observe(slide)});
+
+  document.getElementById('prev').addEventListener('click',function(){go(current-1)});
+  document.getElementById('next').addEventListener('click',function(){go(current+1)});
+  document.getElementById('notes').addEventListener('click',function(){document.body.classList.toggle('notes-open')});
+  document.getElementById('clean').addEventListener('click',function(){document.body.classList.toggle('clean-mode')});
+  document.getElementById('replay-intro').addEventListener('click',replayIntro);
+  document.getElementById('fullscreen').addEventListener('click',toggleFullscreen);
+  document.querySelectorAll('[data-go]').forEach(function(button){button.addEventListener('click',function(){go(Number(button.dataset.go))})});
+
+  document.querySelectorAll('[data-copy]').forEach(function(button){
+    button.addEventListener('click',async function(){
+      const caption=document.getElementById('copy-caption');
+      try{await navigator.clipboard.writeText(button.dataset.copy);caption.textContent='Command copied';}
+      catch(error){caption.textContent='Select and copy the command from the terminal card';}
+    });
+  });
+
+  document.getElementById('run-flow').addEventListener('click',function(){
+    const grid=document.getElementById('mechanism-grid');
+    const cards=Array.from(grid.querySelectorAll('.mechanism'));
+    cards.forEach(function(card){card.classList.remove('on')});
+    grid.closest('.slide').classList.remove('flow-run');
+    void grid.offsetWidth;
+    cards.forEach(function(card,index){setTimeout(function(){card.classList.add('on')},index*260)});
+    setTimeout(function(){grid.closest('.slide').classList.add('flow-run')},cards.length*260);
+  });
+
+  function toggleFullscreen(){
+    if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(){})}
+    else document.exitFullscreen().catch(function(){});
+  }
+  function replayIntro(){
+    intro.classList.remove('run');
+    void intro.offsetWidth;
+    intro.classList.add('run');
+  }
+  document.addEventListener('keydown',function(event){
+    if(event.key==='ArrowRight'||event.key==='PageDown'){event.preventDefault();go(current+1)}
+    else if(event.key==='ArrowLeft'||event.key==='PageUp'){event.preventDefault();go(current-1)}
+    else if(event.key.toLowerCase()==='n'){document.body.classList.toggle('notes-open')}
+    else if(event.key.toLowerCase()==='c'){document.body.classList.toggle('clean-mode')}
+    else if(event.key.toLowerCase()==='r'){replayIntro()}
+    else if(event.key.toLowerCase()==='f'){toggleFullscreen()}
+    else if(event.key.toLowerCase()==='h'){help.classList.toggle('open')}
+    else if(event.key==='Escape'){help.classList.remove('open');document.body.classList.remove('notes-open')}
+  });
+  help.addEventListener('click',function(event){if(event.target===help)help.classList.remove('open')});
+  const linkedSlide=slides.findIndex(function(slide){return '#'+slide.id===window.location.hash});
+  if(linkedSlide>=0){
+    requestAnimationFrame(function(){slides[linkedSlide].scrollIntoView({behavior:'auto',block:'start'});update(linkedSlide)});
+  }else update(0);
+})();
+</script>
+</body>
+</html>

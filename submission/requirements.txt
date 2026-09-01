@@ -1,0 +1,16 @@
+# The Renegaders submission agent: no third-party dependencies.
+#
+# agent.py imports only the Python standard library:
+#   json, re, sqlite3, pathlib, typing
+#
+# Requirements:
+#   Python 3.10 or later
+#   SQLite compiled with the FTS5 extension (the default in CPython 3.10+
+#   official builds, python.org installers, Debian/Ubuntu, and Homebrew)
+#
+# Install step:
+#   none. Do not run `pip install` for this submission.
+#
+# Verify the FTS5 requirement before scoring:
+#   python3 -c "import sqlite3; sqlite3.connect(':memory:').execute(
+#     'CREATE VIRTUAL TABLE t USING fts5(x)'); print('fts5 available')"

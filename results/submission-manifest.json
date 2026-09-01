@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-31T10:18:31Z",
+  "bundle_path": "submission/",
+  "file_count": 4,
+  "total_bytes": 21602,
+  "files": {
+    "README.md": {
+      "sha256": "545fa1a0c417bbbe33002b5471a1343a34f0e2414526549f0871ebbdb4c35003",
+      "bytes": 4752
+    },
+    "REPORT.md": {
+      "sha256": "ce446991770b520af45156d11c2c007e9aa44143c0b08593f0ed116b1233a80c",
+      "bytes": 9726
+    },
+    "agent.py": {
+      "sha256": "f88498ff1f8291dab53fe90c0404526e2fad1c734407432fbc227a9799074242",
+      "bytes": 6513
+    },
+    "requirements.txt": {
+      "sha256": "9d5352f64c0cf68b68a0d450907437b708a35dea800b8d3223a3ed31518fd652",
+      "bytes": 611
+    }
+  },
+  "bundle_tree_sha256": "cdddc8267a47453cc3e3a405091dfcf8bbe0565a4a20655140794be7b4fc2c9d",
+  "frozen_runtime_identity": {
+    "submission_agent_sha256": "f88498ff1f8291dab53fe90c0404526e2fad1c734407432fbc227a9799074242",
+    "starter_agent_sha256": "f88498ff1f8291dab53fe90c0404526e2fad1c734407432fbc227a9799074242",
+    "byte_identical": true
+  },
+  "prohibited_data_check": {
+    "public_set_target_ids_checked": 200,
+    "public_set_target_id_occurrences": 0,
+    "catalog_parent_asins_checked": 50000,
+    "catalog_parent_asin_occurrences": 0,
+    "data_or_archive_files": [],
+    "pattern_matches": {
+      "openai_key": [],
+      "github_token": [],
+      "aws_key": [],
+      "google_key": [],
+      "slack_token": [],
+      "private_key": [],
+      "bearer": [],
+      "assigned_secret": [],
+      "abs_path_macos": [],
+      "abs_path_linux": [],
+      "abs_path_windows": [],
+      "email_address": []
+    },
+    "clean": true
+  }
+}

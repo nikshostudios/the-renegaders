@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Renegaders | Demo script V2</title>
+<style>
+:root{--bg:#050505;--panel:#111;--line:#2a2a2a;--text:#f5f5f5;--muted:#999;--cyan:#25f4ee;--pink:#fe2c55;--size:39px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 8% 35%,rgba(37,244,238,.08),transparent 30%),radial-gradient(circle at 92% 70%,rgba(254,44,85,.08),transparent 30%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.progress{position:fixed;inset:0 0 auto;z-index:20;height:4px;background:#181818}.progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink))}
+.toolbar{position:fixed;inset:4px 0 auto;z-index:15;min-height:72px;padding:12px 4vw;display:flex;align-items:center;justify-content:space-between;gap:20px;background:rgba(5,5,5,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}
+.brand{display:flex;flex-direction:column;gap:3px}.brand strong{font-family:Georgia,serif;font-size:20px}.brand i{color:var(--pink)}.brand span{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}button,.link{border:1px solid #333;border-radius:999px;background:#111;color:var(--text);font:700 13px inherit;padding:11px 15px;cursor:pointer;text-decoration:none}button:hover,.link:hover{border-color:var(--cyan)}button.primary{border-color:transparent;background:var(--cyan);color:#001918}.link.v1{color:var(--cyan)}.speed{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #333;border-radius:999px;background:#0c0c0c;color:#aaa;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.speed input{width:105px;accent-color:var(--cyan);cursor:pointer}.speed output{min-width:24px;color:var(--cyan);font:800 12px ui-monospace,SFMono-Regular,Menlo,monospace;text-align:right}
+.shot-nav{position:fixed;z-index:14;inset:77px 0 auto;padding:8px 4vw;display:flex;justify-content:center;gap:6px;background:rgba(5,5,5,.93);border-bottom:1px solid #1e1e1e}.shot-nav a{padding:8px 12px;border-radius:999px;color:#888;text-decoration:none;font-size:12px}.shot-nav a.active{color:#001918;background:var(--cyan);font-weight:800}
+main{width:min(1040px,90vw);margin:auto;padding:150px 0 24vh}.intro,.card{border:1px solid var(--line);border-radius:22px;background:rgba(17,17,17,.96);box-shadow:0 22px 60px rgba(0,0,0,.35)}.intro{padding:30px;margin-bottom:48px;border-left:5px solid var(--pink)}.intro h1{font:700 clamp(40px,6vw,72px)/.98 Georgia,serif;margin:0 0 18px}.intro p{font-size:17px;color:#bbb;line-height:1.55;margin:8px 0}.intro strong{color:var(--cyan)}
+.card{min-height:78vh;margin:0 0 70px;scroll-margin-top:145px;overflow:hidden;border-left:5px solid var(--cyan)}.card:nth-of-type(even){border-left-color:var(--pink)}.card-head{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:20px;padding:25px 28px;border-bottom:1px solid var(--line)}.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--cyan);color:#001918;font-weight:900;box-shadow:-5px 0 var(--pink)}.card:nth-of-type(even) .num{background:var(--pink);color:#fff;box-shadow:5px 0 var(--cyan)}.card h2{font:700 clamp(30px,4vw,46px)/1.05 Georgia,serif;margin:0}.screen{color:var(--muted);font:700 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.12em;text-align:right}.body{padding:60px clamp(32px,8vw,88px)}
+.say{font:700 var(--size)/1.35 Georgia,serif;margin:0 0 34px;color:#777;transition:color .15s,transform .15s}.say.current{color:var(--text);transform:translateX(6px)}.say strong{color:var(--cyan)}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--cyan);font-size:.78em;background:#071918;border:1px solid #174847;padding:.15em .35em;border-radius:7px}
+.cues{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:48px}.cue{padding:14px 16px;border:1px solid #303030;border-radius:12px;background:#0b0b0b}.cue b{display:block;color:var(--pink);font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px}.cue span{font-size:13px;line-height:1.45;color:#aaa}.hide-cues .cues{display:none}
+.guide{position:fixed;z-index:9;left:0;right:0;top:53%;height:2px;background:linear-gradient(90deg,transparent 8%,rgba(37,244,238,.25),transparent 92%);pointer-events:none}
+@media(max-width:760px){.toolbar{align-items:flex-start}.brand span,.shot-nav a span,.screen{display:none}.shot-nav{justify-content:flex-start;overflow-x:auto}.shot-nav a{min-width:42px;text-align:center}.controls button span,.controls .v1 span,.speed>span{display:none}.speed input{width:74px}.card-head{grid-template-columns:54px 1fr}.cues{grid-template-columns:1fr}.body{padding:42px 24px}.say{font-size:clamp(29px,var(--size),42px)}}
+@media print{.toolbar,.shot-nav,.progress,.guide,.cues{display:none}main{width:100%;padding:0}.intro,.card{min-height:0;break-inside:avoid;box-shadow:none}.say{font-size:19pt;color:#000}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"><span id="bar"></span></div>
+<header class="toolbar">
+  <div class="brand"><strong>The <i>Renegaders</i></strong><span id="status">Version 2 · hackathon build story</span></div>
+  <div class="controls">
+    <button id="prev" type="button" title="Previous shot">← <span>Previous</span></button>
+    <button class="primary" id="play" type="button" aria-pressed="false"><span id="play-icon">▶</span> <span id="play-label">Start</span></button>
+    <button id="next" type="button" title="Next shot"><span>Next</span> →</button>
+    <label class="speed" for="speed"><span>Speed</span><input id="speed" type="range" min="8" max="72" step="2" value="26"><output id="speed-value" for="speed">26</output></label>
+    <button id="smaller" type="button" title="Smaller text">A−</button>
+    <button id="larger" type="button" title="Larger text">A+</button>
+    <button id="cues" type="button" aria-pressed="true">Cues</button>
+    <a class="link v1" href="demo_teleprompter.html"><span>Version 1</span> ↗</a>
+    <button id="full" type="button" title="Full screen">⛶</button>
+  </div>
+</header>
+<nav class="shot-nav" id="shot-nav" aria-label="Script shots">
+  <a href="#shot-1">01 <span>Hook</span></a><a href="#shot-2">02 <span>Problem</span></a><a href="#shot-3">03 <span>Build</span></a><a href="#shot-4">04 <span>Live</span></a><a href="#shot-5">05 <span>Score</span></a><a href="#shot-6">06 <span>Close</span></a>
+</nav>
+<div class="guide" aria-hidden="true"></div>
+<main>
+  <section class="intro">
+    <h1>Version 2: build it, run it, prove it.</h1>
+    <p><strong>Faster and more direct than Version 1.</strong> This cut borrows the hackathon reel's structure, not its technical claims.</p>
+    <p>Speak only the large text. Keep the deck ready, then switch to the prepared terminal for Shot 4.</p>
+  </section>
+
+  <article class="card" id="shot-1">
+    <header class="card-head"><div class="num">1</div><h2>One night. Fifty thousand products.</h2><div class="screen">Camera · face</div></header>
+    <div class="body">
+      <p class="say">We had one night to build a shopping agent that could find one product inside a catalog of <strong>fifty thousand.</strong></p>
+      <p class="say">This is the exact system we built for TechJam, the conversation it handles, and what happened when we tested it across all two hundred released public sessions.</p>
+      <p class="say">No long setup. Here is the customer problem.</p>
+      <div class="cues"><div class="cue"><b>Camera</b><span>Begin full-screen on your face.</span></div><div class="cue"><b>Delivery</b><span>Move quickly. Pause only after “fifty thousand.”</span></div><div class="cue"><b>Then</b><span>Cut to the customer request.</span></div></div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-2">
+    <header class="card-head"><div class="num">2</div><h2>The customer gives us five words.</h2><div class="screen">Screen · request and baseline</div></header>
+    <div class="body">
+      <p class="say">The customer says, “I need a wallet.” That is all we get. No colour, no material, no price.</p>
+      <p class="say">The official starter found the target in twenty five out of two hundred released public sessions. Twelve and a half percent.</p>
+      <p class="say">So finding wallets was not enough. The agent had to remember what the customer meant, ask for one useful detail, and use the answer.</p>
+      <div class="cues"><div class="cue"><b>Screen</b><span>Show the request first, then reveal 25 out of 200.</span></div><div class="cue"><b>Accuracy</b><span>Say released public sessions.</span></div><div class="cue"><b>Pace</b><span>Do not explain the final score yet.</span></div></div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-3">
+    <header class="card-head"><div class="num">3</div><h2>Here is the build.</h2><div class="screen">Screen · animated mechanism</div></header>
+    <div class="body">
+      <p class="say">First, build a fast index over the catalog.</p>
+      <p class="say">From there, keep the useful words from earlier turns. Ask for the missing detail. Then rerank the same products when the customer answers.</p>
+      <p class="say">A title match counts more than a loose mention in the description. Filler gets dropped.</p>
+      <p class="say">And the same conversation gives the same result every time. There is no model call hiding behind it.</p>
+      <div class="cues"><div class="cue"><b>Deck</b><span>Reveal each mechanism as you name it.</span></div><div class="cue"><b>Plain language</b><span>Leave SQLite FTS5 and BM25 on screen. Do not say them.</span></div><div class="cue"><b>Then</b><span>Cut to the prepared terminal.</span></div></div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-4">
+    <header class="card-head"><div class="num">4</div><h2>Now run the agent.</h2><div class="screen">Screen · terminal</div></header>
+    <div class="body">
+      <p class="say"><strong>Run:</strong> <code>python3 demo.py --top-k 3</code></p>
+      <p class="say">Alright, here is where it becomes useful. The first message is: “I’m looking for wallets, but I’m still exploring.”</p>
+      <p class="say">The matches are wallets, but the agent still needs a material and a colour. So I give it two words: leather, black.</p>
+      <p class="say">And there we go. Black leather wallets move to the top.</p>
+      <p class="say">I never said wallet again. The agent carried it forward from the first message.</p>
+      <div class="cues"><div class="cue"><b>Screen</b><span>Keep the terminal full-screen and readable.</span></div><div class="cue"><b>Do not claim</b><span>Do not call a displayed product the hidden target.</span></div><div class="cue"><b>Hold</b><span>Leave the second recommendation list visible for two seconds.</span></div></div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-5">
+    <header class="card-head"><div class="num">5</div><h2>One conversation became two hundred.</h2><div class="screen">Screen · result</div></header>
+    <div class="body">
+      <p class="say">Everything you just saw was one conversation. So then we ran all two hundred released public sessions.</p>
+      <p class="say">The starter found twenty five targets. This agent found <strong>one hundred and eighty seven.</strong></p>
+      <p class="say">Hit Rate at 10 reached 0.935. The technical score reached 0.808740. The target appeared after 2.945 turns on average.</p>
+      <p class="say">We also tested changes that sounded clever and scored worse. We removed them.</p>
+      <div class="cues"><div class="cue"><b>Point</b><span>Move from 25 to 187, then show the other three metrics.</span></div><div class="cue"><b>Evidence</b><span>These are public development results.</span></div><div class="cue"><b>Pace</b><span>Give 187 the longest pause.</span></div></div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-6">
+    <header class="card-head"><div class="num">6</div><h2>The result, without the sales pitch.</h2><div class="screen">Camera · face</div></header>
+    <div class="body">
+      <p class="say">Everything I just showed runs locally. Zero model tokens. Zero API cost. No network call.</p>
+      <p class="say">Local timing changed between runs, from a twenty two millisecond median to forty six. That number depends on the machine and its load.</p>
+      <p class="say">We have not seen the private set. What we can prove is that the complete public result reproduced exactly.</p>
+      <p class="say">One vague request. Two added words. Fifty thousand products. And one hundred and eighty seven targets found.</p>
+      <p class="say">That is the agent we built in one night.</p>
+      <div class="cues"><div class="cue"><b>Camera</b><span>Finish full-screen on your face.</span></div><div class="cue"><b>Honesty</b><span>Keep the private-set limitation.</span></div><div class="cue"><b>End</b><span>Stop after “one night.”</span></div></div>
+    </div>
+  </article>
+</main>
+<script>
+(()=>{
+const cards=[...document.querySelectorAll('.card')],lines=[...document.querySelectorAll('.say')],links=[...document.querySelectorAll('#shot-nav a')];
+const status=document.getElementById('status'),bar=document.getElementById('bar'),play=document.getElementById('play'),label=document.getElementById('play-label'),icon=document.getElementById('play-icon'),speed=document.getElementById('speed'),speedValue=document.getElementById('speed-value');
+let running=false,last=null,carry=0,size=39,frame=null;
+const current=()=>{const y=scrollY+innerHeight*.35;let i=0;cards.forEach((c,n)=>{if(c.offsetTop<=y)i=n});return i};
+const setRun=on=>{running=on;play.setAttribute('aria-pressed',String(on));label.textContent=on?'Pause':'Start';icon.textContent=on?'❚❚':'▶';last=null;carry=0;if(on)frame=requestAnimationFrame(step);else if(frame)cancelAnimationFrame(frame)};
+const step=t=>{if(!running)return;if(last!==null){carry+=Number(speed.value)*((t-last)/1000);const px=Math.floor(carry);if(px){scrollBy(0,px);carry-=px}if(innerHeight+scrollY>=document.documentElement.scrollHeight-2){setRun(false);return}}last=t;frame=requestAnimationFrame(step)};
+const go=i=>{setRun(false);cards[Math.max(0,Math.min(cards.length-1,i))].scrollIntoView({behavior:'smooth',block:'start'})};
+const update=()=>{const i=current(),guide=innerHeight*.54;status.textContent=`Version 2 · Shot ${i+1} of ${cards.length} · ${cards[i].querySelector('h2').textContent}`;links.forEach((a,n)=>a.classList.toggle('active',n===i));let closest=null,d=Infinity;lines.forEach(line=>{const r=line.getBoundingClientRect(),x=Math.abs(r.top+r.height*.35-guide);if(x<d){d=x;closest=line}});lines.forEach(line=>line.classList.toggle('current',line===closest));const max=document.documentElement.scrollHeight-innerHeight;bar.style.width=(max?Math.min(100,scrollY/max*100):0)+'%'};
+play.addEventListener('click',()=>setRun(!running));document.getElementById('prev').addEventListener('click',()=>go(current()-1));document.getElementById('next').addEventListener('click',()=>go(current()+1));
+speed.addEventListener('input',()=>{speedValue.value=speed.value;localStorage.setItem('renegaders-v2-speed',speed.value)});const savedSpeed=localStorage.getItem('renegaders-v2-speed');if(savedSpeed){speed.value=savedSpeed;speedValue.value=savedSpeed}
+document.getElementById('larger').addEventListener('click',()=>{size=Math.min(60,size+3);document.documentElement.style.setProperty('--size',size+'px');update()});document.getElementById('smaller').addEventListener('click',()=>{size=Math.max(26,size-3);document.documentElement.style.setProperty('--size',size+'px');update()});
+document.getElementById('cues').addEventListener('click',e=>{const hidden=document.body.classList.toggle('hide-cues');e.currentTarget.setAttribute('aria-pressed',String(!hidden));e.currentTarget.textContent=hidden?'Show cues':'Cues'});document.getElementById('full').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());
+addEventListener('scroll',()=>requestAnimationFrame(update),{passive:true});addEventListener('resize',update);document.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();setRun(!running)}if(e.key==='ArrowRight')go(current()+1);if(e.key==='ArrowLeft')go(current()-1);if(e.key.toLowerCase()==='f')document.getElementById('full').click();if(e.key.toLowerCase()==='c')document.getElementById('cues').click()});update();
+})();
+</script>
+</body>
+</html>

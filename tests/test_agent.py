@@ -9,6 +9,84 @@ from starter.agent import Agent
 
 
 class AgentConversationTest(unittest.TestCase):
+    def test_identical_conversations_are_deterministic_across_agents(self) -> None:
+        products = [
+            {
+                "parent_asin": "FIRST",
+                "title": "Black leather wallet",
+                "categories": ["Accessories", "Wallets"],
+            },
+            {
+                "parent_asin": "SECOND",
+                "title": "Black leather wallet",
+                "categories": ["Accessories", "Wallets"],
+            },
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            catalog = Path(directory) / "catalog.jsonl"
+            catalog.write_text(
+                "".join(json.dumps(product) + "\n" for product in products),
+                encoding="utf-8",
+            )
+            first = Agent(catalog)
+            second = Agent(catalog)
+            first.reset("first-session", {})
+            second.reset("second-session", {})
+            first_outputs = [
+                first.respond("first-session", "I'm looking for wallets.", 1, 2),
+                first.respond("first-session", "Leather, in black.", 2, 2),
+            ]
+            second_outputs = [
+                second.respond("second-session", "I'm looking for wallets.", 1, 2),
+                second.respond("second-session", "Leather, in black.", 2, 2),
+            ]
+
+        self.assertEqual(first_outputs, second_outputs)
+
+    def test_evaluator_only_metadata_cannot_change_recommendations(self) -> None:
+        products = [
+            {
+                "parent_asin": "NATURAL_FIRST",
+                "title": "Blue running shoe",
+                "categories": ["Shoes"],
+            },
+            {
+                "parent_asin": "HIDDEN_TARGET",
+                "title": "Blue walking shoe",
+                "categories": ["Shoes"],
+            },
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            catalog = Path(directory) / "catalog.jsonl"
+            catalog.write_text(
+                "".join(json.dumps(product) + "\n" for product in products),
+                encoding="utf-8",
+            )
+            plain = Agent(catalog)
+            metadata = Agent(catalog)
+            plain.reset("plain", {})
+            metadata.reset(
+                "public_target_scenario_marker",
+                {
+                    "sample_id": "public_target",
+                    "scenario_type": "buying",
+                    "ground_truth": {"parent_asin": "HIDDEN_TARGET"},
+                },
+            )
+            plain_response = plain.respond("plain", "I need blue running shoes.", 1, 10)
+            metadata_response = metadata.respond(
+                "public_target_scenario_marker",
+                "I need blue running shoes.",
+                1,
+                10,
+            )
+
+        self.assertEqual(
+            plain_response["recommendations"][0]["parent_asin"],
+            "NATURAL_FIRST",
+        )
+        self.assertEqual(plain_response, metadata_response)
+
     def test_equal_reranker_scores_preserve_lexical_order(self) -> None:
         products = [
             {

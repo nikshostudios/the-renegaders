@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#010101">
+<title>The Renegaders, demo teleprompter</title>
+<style>
+:root{
+  --bg:#010101;
+  --surface:#121212;
+  --surface-2:#1d1d1d;
+  --cyan:#25f4ee;
+  --pink:#fe2c55;
+  --text:#f8f8f8;
+  --muted:#aaa;
+  --line:rgba(255,255,255,.13);
+  --prompt-size:38px;
+  --toolbar-height:76px;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --display:Georgia,"Times New Roman",serif;
+  --body:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-color:var(--cyan) var(--bg)}
+body{
+  margin:0;padding-top:var(--toolbar-height);min-width:320px;color:var(--text);font-family:var(--body);line-height:1.55;
+  background:
+    radial-gradient(circle at 82% 12%,rgba(37,244,238,.10),transparent 30rem),
+    radial-gradient(circle at 12% 70%,rgba(254,44,85,.09),transparent 34rem),
+    var(--bg);
+}
+button,input{font:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+::selection{color:var(--bg);background:var(--cyan)}
+
+.progress{position:fixed;z-index:1002;inset:0 0 auto;height:3px;background:rgba(255,255,255,.08)}
+.progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--cyan),#fff 50%,var(--pink));box-shadow:0 0 16px rgba(37,244,238,.55)}
+.toolbar{
+  position:fixed;z-index:1000;inset:0 0 auto;min-height:var(--toolbar-height);display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:11px 20px 10px;background:rgba(5,5,5,.94);border-bottom:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.44);backdrop-filter:blur(18px);
+}
+.toolbar-context{min-width:190px}
+.toolbar-context strong{display:block;font-family:var(--display);font-size:18px;line-height:1.05}
+.toolbar-context strong i{color:var(--pink);font-style:normal}
+.toolbar-context span{display:block;margin-top:4px;color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.toolbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;overflow-x:auto;scrollbar-width:none}
+.toolbar-actions::-webkit-scrollbar{display:none}
+.toolbar-button,.deck-link{
+  min-width:42px;min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;color:var(--text);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap;
+}
+.toolbar-button:hover,.deck-link:hover{background:var(--surface-2);border-color:rgba(37,244,238,.55)}
+.toolbar-button.primary{min-width:88px;color:var(--bg);background:var(--cyan);border-color:var(--cyan)}
+body.auto-running .toolbar-button.primary{color:#fff;background:var(--pink);border-color:var(--pink)}
+.speed-control{min-width:154px;display:grid;grid-template-columns:auto 82px 30px;gap:7px;align-items:center;padding:0 10px;color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.speed-control input{width:82px;accent-color:var(--cyan)}
+.speed-control output{color:var(--text);font-variant-numeric:tabular-nums}
+
+.reading-guide{
+  position:fixed;z-index:8;top:44vh;left:0;width:100%;height:19vh;pointer-events:none;
+  background:linear-gradient(90deg,rgba(37,244,238,.10),transparent 14%,transparent 86%,rgba(254,44,85,.10));
+  border-top:1px solid rgba(37,244,238,.08);border-bottom:1px solid rgba(254,44,85,.08);opacity:.72;
+}
+.section-nav{position:sticky;z-index:50;top:var(--toolbar-height);padding:8px 14px;background:rgba(1,1,1,.91);border-bottom:1px solid var(--line);overflow-x:auto;backdrop-filter:blur(14px)}
+.section-nav nav{width:max-content;display:flex;gap:6px;margin:0 auto}
+.section-nav a{display:grid;grid-template-columns:22px auto;gap:7px;align-items:center;padding:8px 12px;color:var(--muted);border:1px solid transparent;border-radius:999px;font-size:11px;text-decoration:none;white-space:nowrap}
+.section-nav a:hover,.section-nav a.active{color:var(--text);background:var(--surface);border-color:var(--line)}
+.section-nav a b{color:var(--cyan);font-family:var(--mono);font-size:10px;font-variant-numeric:tabular-nums}
+
+main{width:min(1040px,calc(100% - 48px));margin:0 auto;padding:42px 0 180px}
+.preflight,.guardrails{scroll-margin-top:150px;margin-bottom:60px;padding:28px;background:rgba(18,18,18,.82);border:1px solid var(--line);border-left:5px solid var(--cyan);border-radius:16px}
+.preflight h1,.guardrails h2{margin:0 0 14px;font-family:var(--display);font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.03em}
+.preflight p,.guardrails li{color:var(--muted)}
+.preflight strong{color:var(--cyan)}
+.shortcut-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.shortcut-row span{padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-family:var(--mono);font-size:10px}
+.shortcut-row b{color:var(--text)}
+
+.card{
+  scroll-margin-top:150px;min-height:calc(100svh - 150px);margin-bottom:92px;overflow:hidden;
+  background:linear-gradient(145deg,rgba(20,20,20,.95),rgba(6,6,6,.94));border:1px solid var(--line);border-left:5px solid var(--cyan);border-radius:22px;
+  box-shadow:0 26px 70px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.02);
+}
+.card:nth-of-type(even){border-left-color:var(--pink)}
+.card-header{display:grid;grid-template-columns:64px 1fr auto;gap:18px;align-items:center;padding:24px clamp(26px,5vw,54px);border-bottom:1px solid var(--line)}
+.card-num{width:50px;height:50px;display:grid;place-items:center;color:var(--bg);background:var(--cyan);border-radius:50%;font-family:var(--display);font-size:22px;font-weight:700;box-shadow:-4px 0 0 rgba(254,44,85,.82)}
+.card:nth-of-type(even) .card-num{background:var(--pink);box-shadow:4px 0 0 rgba(37,244,238,.82)}
+.card-header h2{margin:0;font-family:var(--display);font-size:clamp(26px,3vw,38px);letter-spacing:-.025em}
+.screen-cue{color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.card-body{padding:clamp(48px,8vw,92px) clamp(28px,8vw,96px)}
+.say{max-width:30ch;margin:0 auto;color:var(--text);font-family:var(--display);font-size:var(--prompt-size);font-weight:520;line-height:1.48;letter-spacing:-.012em;opacity:.54;transition:opacity 180ms ease,color 180ms ease,text-shadow 180ms ease,transform 180ms ease}
+.say.is-current{color:#fff;opacity:1;text-shadow:-2px 0 20px rgba(37,244,238,.12),2px 0 20px rgba(254,44,85,.12);transform:scale(1.012)}
+.say strong{color:var(--pink);font-family:var(--body);font-size:.68em;letter-spacing:0;text-transform:uppercase}
+.say code{color:var(--cyan);font-family:var(--mono);font-size:.72em;overflow-wrap:anywhere}
+.say+.say{margin-top:1.05em}
+.cue-grid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:64px auto 0;padding-top:38px;border-top:1px solid var(--line)}
+.cue-grid::before{content:"PRESENTER CUES · DO NOT READ";position:absolute;top:12px;left:0;color:var(--pink);font-family:var(--mono);font-size:9px;font-weight:900;letter-spacing:.12em}
+.cue{min-height:110px;padding:16px;background:rgba(29,29,29,.72);border:1px solid var(--line);border-radius:12px}
+.cue b{display:block;margin-bottom:7px;color:var(--cyan);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.cue.watch b{color:var(--pink)}
+.cue span{color:var(--muted);font-size:13px}
+body.cues-hidden .cue-grid{display:none}
+.guardrails{margin-top:80px;border-left-color:var(--pink)}
+.guardrails h2{font-size:36px}
+.guardrails ul{margin:0;padding-left:20px}
+.guardrails li{padding:5px 0}
+
+.help{position:fixed;inset:0;z-index:1100;display:none;place-items:center;padding:20px;background:rgba(1,1,1,.84);backdrop-filter:blur(10px)}
+.help.open{display:grid}
+.help-card{width:min(580px,100%);padding:30px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--cyan);border-radius:18px}
+.help-card h2{margin:0;font-family:var(--display);font-size:34px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin-top:24px}
+.keys kbd{justify-self:start;padding:4px 8px;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;font-family:var(--mono);font-size:11px}
+.keys span{color:var(--muted)}
+
+@media(max-width:920px){
+  :root{--prompt-size:32px;--toolbar-height:70px}
+  .toolbar{padding-inline:10px}.toolbar-context{min-width:126px}.toolbar-context strong{font-size:15px}.toolbar-context span{font-size:8px}
+  .toolbar-button,.deck-link{min-width:40px;padding:0 10px}.button-word,.speed-control>span,#fullscreen-label,.deck-link span{display:none}
+  .speed-control{min-width:112px;grid-template-columns:74px 28px}.speed-control input{width:74px}
+  .section-nav{padding-inline:8px}.section-nav nav{margin:0}.section-nav a{grid-template-columns:1fr;min-width:42px;justify-items:center}.section-nav a span{display:none}
+  main{width:min(100% - 24px,1040px);padding-top:28px}.card{min-height:calc(100svh - 130px);margin-bottom:62px;border-radius:16px}.card-body{padding:46px 24px 58px}
+  .card-header{grid-template-columns:54px 1fr}.screen-cue{grid-column:2}.cue-grid{grid-template-columns:1fr}
+}
+@media(max-width:570px){.toolbar-context{display:none}.toolbar{justify-content:center}.toolbar-actions{justify-content:flex-start}.reading-guide{top:42vh;height:22vh}.say{max-width:24ch}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.say{transition:none}}
+@media print{.toolbar,.progress,.reading-guide,.section-nav,.help{display:none!important}body{padding-top:0;background:#fff;color:#000}main{width:100%;padding:0}.card{min-height:0;break-inside:avoid;box-shadow:none}.say{color:#000;font-size:18pt;opacity:1}.cue span,.guardrails li{color:#333}}
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+<header class="toolbar" aria-label="Teleprompter controls">
+  <div class="toolbar-context"><strong>The <i>Renegaders</i></strong><span id="section-status" aria-live="polite">Ready · 6 shots</span></div>
+  <div class="toolbar-actions">
+    <button class="toolbar-button" id="previous-section" type="button" aria-label="Previous shot" title="Previous shot, Left arrow">← <span class="button-word">Previous</span></button>
+    <button class="toolbar-button primary" id="toggle-scroll" type="button" aria-pressed="false" title="Start or pause auto-scroll, Space"><span id="play-symbol" aria-hidden="true">▶</span><span id="toggle-label">Start</span></button>
+    <button class="toolbar-button" id="next-section" type="button" aria-label="Next shot" title="Next shot, Right arrow"><span class="button-word">Next</span> →</button>
+    <label class="speed-control" for="scroll-speed"><span>Speed</span><input id="scroll-speed" type="range" min="8" max="80" step="2" value="24"><output id="speed-output" for="scroll-speed">24</output></label>
+    <button class="toolbar-button" id="font-down" type="button" aria-label="Make script text smaller" title="Smaller text, Minus">A−</button>
+    <button class="toolbar-button" id="font-up" type="button" aria-label="Make script text larger" title="Larger text, Plus">A+</button>
+    <button class="toolbar-button" id="toggle-cues" type="button" aria-pressed="true" title="Show or hide presenter cues, C">Cues</button>
+    <a class="deck-link" href="demo_presentation.html" target="_blank" rel="noopener" title="Open the presentation deck"><span>Deck</span> ↗</a>
+    <button class="toolbar-button" id="fullscreen" type="button" title="Enter full screen, F">⛶ <span id="fullscreen-label">Full screen</span></button>
+    <button class="toolbar-button" id="show-help" type="button" aria-label="Show keyboard controls" title="Keyboard controls, H">?</button>
+  </div>
+</header>
+<div class="reading-guide" aria-hidden="true"></div>
+
+<aside class="section-nav">
+  <nav id="script-nav" aria-label="Script shots">
+    <a href="#shot-1"><b>01</b><span>The problem</span></a>
+    <a href="#shot-2"><b>02</b><span>The baseline</span></a>
+    <a href="#shot-3"><b>03</b><span>Live session</span></a>
+    <a href="#shot-4"><b>04</b><span>How it works</span></a>
+    <a href="#shot-5"><b>05</b><span>The result</span></a>
+    <a href="#shot-6"><b>06</b><span>Cost and honesty</span></a>
+  </nav>
+</aside>
+
+<main>
+  <section class="preflight" id="preflight">
+    <h1>Three-minute recording script</h1>
+    <p><strong>Speak only the large text.</strong> The smaller cards are camera, screen, and honesty cues.</p>
+    <p>Keep the presentation deck and a prepared terminal open. Shot 3 hands off to the real command <code>python3 demo.py --top-k 3</code>.</p>
+    <div class="shortcut-row"><span><b>Space</b> start or pause</span><span><b>← →</b> change shot</span><span><b>+ −</b> text size</span><span><b>C</b> cues</span><span><b>F</b> full screen</span><span><b>H</b> help</span></div>
+  </section>
+
+  <article class="card" id="shot-1">
+    <header class="card-header"><div class="card-num">1</div><h2>The customer gives us almost nothing</h2><div class="screen-cue">Camera · Full-screen face</div></header>
+    <div class="card-body">
+      <p class="say">Here is the entire customer brief: “I need a wallet.”</p>
+      <p class="say">That is it.</p>
+      <p class="say">No brand, no material, no colour, no price. And somewhere inside fifty thousand products is the one they actually want.</p>
+      <p class="say">So rather than tell you our agent understands shopping intent, here is the whole conversation running end to end.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Camera</b><span>Start on your face. The deck can be full screen behind you or appear immediately after this line.</span></div>
+        <div class="cue watch"><b>Delivery</b><span>Say the customer request plainly. Pause after “I need a wallet,” then let “That is it” land on its own.</span></div>
+        <div class="cue"><b>Then</b><span>Move to Shot 2 immediately after “running end to end.”</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-2">
+    <header class="card-header"><div class="card-num">2</div><h2>The released public baseline</h2><div class="screen-cue">Screen · Presentation Shot 2</div></header>
+    <div class="card-body">
+      <p class="say">Before I run it, one number, just so you know where we started.</p>
+      <p class="say">The official starter found the target in twenty five out of two hundred released public sessions. Twelve and a half percent.</p>
+      <p class="say">Finding wallets was only the first step. The system still had to carry the conversation forward.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Point</b><span>Show 25 first. Let the 187 comparison remain visible without explaining it yet.</span></div>
+        <div class="cue watch"><b>Accuracy</b><span>Say “public sessions.” Do not imply that this is a private-set score.</span></div>
+        <div class="cue"><b>Then</b><span>Leave the deck and switch to the prepared terminal for the live session.</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-3">
+    <header class="card-header"><div class="card-num">3</div><h2>Run the real conversation</h2><div class="screen-cue">Screen · Full terminal · No face bubble</div></header>
+    <div class="card-body">
+      <p class="say"><strong>Switch to the terminal and run:</strong> <code>python3 demo.py --top-k 3</code></p>
+      <p class="say">Alright. So this is the first message: “I’m looking for wallets, but I’m still exploring.”</p>
+      <p class="say">It is a decent start. The matches are wallets, and it asks what requirement matters most.</p>
+      <p class="say">But it still does not know the material or the colour. The customer has not said either of them yet. Which is exactly why it asks.</p>
+      <p class="say">So this is what I’m going to give it: leather, black.</p>
+      <p class="say">That is it. Two words.</p>
+      <p class="say">And there we go. Black leather wallets have moved to the top.</p>
+      <p class="say">Notice what I did not repeat. I never said wallet again.</p>
+      <p class="say">The first message gave it the shopping job. The second message gave it the judgment. The agent kept both.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Screen</b><span>Keep the terminal large enough that product titles and IDs are readable. Type the two customer turns exactly.</span></div>
+        <div class="cue watch"><b>Do not claim</b><span>Do not call any displayed recommendation the hidden target. This live run is not scored against hidden ground truth.</span></div>
+        <div class="cue"><b>Then</b><span>Return to Presentation Shot 4 only after the second recommendation list is visible.</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-4">
+    <header class="card-header"><div class="card-num">4</div><h2>Four small mechanisms</h2><div class="screen-cue">Screen · Presentation Shot 4 · Face optional</div></header>
+    <div class="card-body">
+      <p class="say">Now, underneath that, four small things are happening.</p>
+      <p class="say">It keeps the useful words from earlier. It asks for the missing detail. It drops filler like “what matters is.” Then it reranks the same catalog.</p>
+      <p class="say">A match in the product title counts more than a loose mention in the description.</p>
+      <p class="say">And the same conversation gives the same result every time. There is no model call behind it.</p>
+      <p class="say">The customer never sees any of that. They just do not have to start again.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Animate</b><span>Use “Run the flow” on the deck so the four mechanisms appear one at a time.</span></div>
+        <div class="cue watch"><b>Plain language</b><span>Do not speak SQLite FTS5, BM25, or field-weight jargon. The slide may show technical labels quietly.</span></div>
+        <div class="cue"><b>Then</b><span>Move to the result as soon as the customer consequence is clear.</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-5">
+    <header class="card-header"><div class="card-num">5</div><h2>The complete public evaluation</h2><div class="screen-cue">Screen · Presentation Shot 5</div></header>
+    <div class="card-body">
+      <p class="say">Alright, that is one conversation. So then we ran all two hundred released public sessions.</p>
+      <p class="say">The starter found twenty five targets. This agent found one hundred and eighty seven.</p>
+      <p class="say">That gives us a Hit Rate at 10 of 0.935, a technical score of 0.808740, and an average of 2.945 turns to reach the target.</p>
+      <p class="say">We tried other changes along the way. Some sounded clever and made the score worse, so they did not make it into this agent.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Point</b><span>Move from 25 to 187, then Hit Rate at 10, technical score, and average turns.</span></div>
+        <div class="cue watch"><b>Evidence</b><span>These are the released public sessions. Private-set performance remains unknown.</span></div>
+        <div class="cue"><b>Optional</b><span>If you show a fresh full evaluator run, disclose that it takes roughly 28 seconds. Otherwise show the checked result file.</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card" id="shot-6">
+    <header class="card-header"><div class="card-num">6</div><h2>Separate the result from the claim</h2><div class="screen-cue">Camera · Full-screen face</div></header>
+    <div class="card-body">
+      <p class="say">Now, the demo and the evidence are two different things, so here is exactly what we can claim.</p>
+      <p class="say">Zero model tokens. Zero API cost. No network call.</p>
+      <p class="say">On one local run, the median was twenty two milliseconds. On a later run it was forty six, so that number depends on the machine and its load.</p>
+      <p class="say">These are public development results. We have not seen the private set.</p>
+      <p class="say">What we can prove is that the complete public result reproduced exactly.</p>
+      <p class="say">The customer added two words, and the agent knew what those two words belonged to. That is the whole thing.</p>
+      <div class="cue-grid">
+        <div class="cue"><b>Camera</b><span>Finish on your face. The proof slide can sit behind you, but your delivery is the final image.</span></div>
+        <div class="cue watch"><b>Honesty</b><span>Do not turn public development evidence into a private-set claim. Keep the host-dependent timing qualification.</span></div>
+        <div class="cue"><b>End</b><span>Stop after “That is the whole thing.” Do not add an improvised promise or claim.</span></div>
+      </div>
+    </div>
+  </article>
+
+  <section class="guardrails" id="guardrails">
+    <h2>Do not drift</h2>
+    <ul>
+      <li>Never state or imply a private-set result.</li>
+      <li>Never call a live recommendation the correct hidden target.</li>
+      <li>Do not show catalog contents beyond normal product titles in the agent output.</li>
+      <li>Do not show an absolute machine path, credential, private message, or unrelated project.</li>
+      <li>If a take contains a wrong number, rerecord it instead of correcting it in captions.</li>
+    </ul>
+  </section>
+</main>
+
+<div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-card"><h2 id="help-title">Teleprompter controls</h2><div class="keys"><kbd>Space</kbd><span>Start or pause auto-scroll</span><kbd>← →</kbd><span>Previous or next shot</span><kbd>+ −</kbd><span>Increase or decrease script size</span><kbd>C</kbd><span>Show or hide presenter cues</span><kbd>F</kbd><span>Enter or leave full screen</span><kbd>H</kbd><span>Show or hide this guide</span><kbd>Esc</kbd><span>Close this guide</span></div></div>
+</div>
+
+<script>
+(()=>{
+  const cards=[...document.querySelectorAll('article.card')];
+  const lines=[...document.querySelectorAll('.say')];
+  const navLinks=[...document.querySelectorAll('#script-nav a')];
+  const status=document.getElementById('section-status');
+  const progress=document.getElementById('progress-bar');
+  const toggleBtn=document.getElementById('toggle-scroll');
+  const toggleLabel=document.getElementById('toggle-label');
+  const playSymbol=document.getElementById('play-symbol');
+  const speedInput=document.getElementById('scroll-speed');
+  const speedOutput=document.getElementById('speed-output');
+  const cuesBtn=document.getElementById('toggle-cues');
+  const fsLabel=document.getElementById('fullscreen-label');
+  const help=document.getElementById('help');
+  let scrolling=false;
+  let rafId=null;
+  let carry=0;
+  let lastTs=null;
+  let promptSize=Number(localStorage.getItem('renegaders-prompt-size'))||38;
+  speedInput.value=localStorage.getItem('renegaders-scroll-speed')||'24';
+  speedOutput.textContent=speedInput.value;
+  document.documentElement.style.setProperty('--prompt-size',promptSize+'px');
+
+  const currentIndex=()=>{
+    const probe=window.scrollY+window.innerHeight*.3;
+    let index=0;
+    cards.forEach((card,i)=>{if(card.offsetTop<=probe)index=i});
+    return index;
+  };
+
+  const setScrolling=on=>{
+    scrolling=on;
+    document.body.classList.toggle('auto-running',on);
+    toggleBtn.setAttribute('aria-pressed',String(on));
+    toggleLabel.textContent=on?'Pause':'Start';
+    playSymbol.textContent=on?'❚❚':'▶';
+    lastTs=null;carry=0;
+    if(on)rafId=requestAnimationFrame(step);
+    else if(rafId)cancelAnimationFrame(rafId);
+  };
+
+  const step=timestamp=>{
+    if(!scrolling)return;
+    if(lastTs!==null){
+      carry+=(Number(speedInput.value)*2.15)*((timestamp-lastTs)/1000);
+      const pixels=Math.floor(carry);
+      if(pixels>0){window.scrollBy(0,pixels);carry-=pixels}
+      if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2){setScrolling(false);return}
+    }
+    lastTs=timestamp;
+    rafId=requestAnimationFrame(step);
+  };
+
+  const goTo=index=>{
+    const card=cards[Math.max(0,Math.min(cards.length-1,index))];
+    if(!card)return;
+    const resume=scrolling;
+    setScrolling(false);
+    card.scrollIntoView({behavior:'smooth',block:'start'});
+    if(resume)setTimeout(()=>setScrolling(true),700);
+  };
+
+  const updateReadingState=()=>{
+    const index=currentIndex();
+    const title=cards[index]?.querySelector('h2')?.textContent||'';
+    status.textContent=`Shot ${index+1} of ${cards.length} · ${title}`;
+    navLinks.forEach((link,i)=>{
+      link.classList.toggle('active',i===index);
+      if(i===index)link.setAttribute('aria-current','step');else link.removeAttribute('aria-current');
+    });
+    const readingY=window.innerHeight*.535;
+    let closest=null;
+    let distance=Infinity;
+    lines.forEach(line=>{
+      const rect=line.getBoundingClientRect();
+      const lineY=rect.top+Math.min(rect.height*.5,80);
+      const delta=Math.abs(lineY-readingY);
+      if(delta<distance){distance=delta;closest=line}
+    });
+    lines.forEach(line=>line.classList.toggle('is-current',line===closest));
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    const percentage=max>0?Math.min(100,Math.max(0,window.scrollY/max*100)):0;
+    progress.style.width=percentage+'%';
+  };
+
+  let updateQueued=false;
+  const queueUpdate=()=>{
+    if(updateQueued)return;
+    updateQueued=true;
+    requestAnimationFrame(()=>{updateReadingState();updateQueued=false});
+  };
+
+  toggleBtn.addEventListener('click',()=>setScrolling(!scrolling));
+  document.getElementById('previous-section').addEventListener('click',()=>goTo(currentIndex()-1));
+  document.getElementById('next-section').addEventListener('click',()=>goTo(currentIndex()+1));
+  speedInput.addEventListener('input',()=>{speedOutput.textContent=speedInput.value;localStorage.setItem('renegaders-scroll-speed',speedInput.value)});
+  document.getElementById('font-up').addEventListener('click',()=>{promptSize=Math.min(62,promptSize+3);document.documentElement.style.setProperty('--prompt-size',promptSize+'px');localStorage.setItem('renegaders-prompt-size',String(promptSize));queueUpdate()});
+  document.getElementById('font-down').addEventListener('click',()=>{promptSize=Math.max(24,promptSize-3);document.documentElement.style.setProperty('--prompt-size',promptSize+'px');localStorage.setItem('renegaders-prompt-size',String(promptSize));queueUpdate()});
+  cuesBtn.addEventListener('click',()=>{
+    const hidden=document.body.classList.toggle('cues-hidden');
+    cuesBtn.setAttribute('aria-pressed',String(!hidden));
+    cuesBtn.textContent=hidden?'Show cues':'Cues';
+    queueUpdate();
+  });
+  document.getElementById('fullscreen').addEventListener('click',()=>{
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();
+  });
+  document.addEventListener('fullscreenchange',()=>{fsLabel.textContent=document.fullscreenElement?'Exit full screen':'Full screen'});
+  document.getElementById('show-help').addEventListener('click',()=>help.classList.toggle('open'));
+  help.addEventListener('click',event=>{if(event.target===help)help.classList.remove('open')});
+  navLinks.forEach((link,index)=>link.addEventListener('click',event=>{event.preventDefault();goTo(index)}));
+  window.addEventListener('scroll',queueUpdate,{passive:true});
+  window.addEventListener('resize',queueUpdate,{passive:true});
+
+  document.addEventListener('keydown',event=>{
+    if(event.target.matches('input,textarea'))return;
+    if(event.code==='Space'){event.preventDefault();setScrolling(!scrolling)}
+    else if(event.key==='ArrowLeft'){event.preventDefault();goTo(currentIndex()-1)}
+    else if(event.key==='ArrowRight'){event.preventDefault();goTo(currentIndex()+1)}
+    else if(event.key==='-'||event.key==='_')document.getElementById('font-down').click();
+    else if(event.key==='+'||event.key==='=')document.getElementById('font-up').click();
+    else if(event.key.toLowerCase()==='c')cuesBtn.click();
+    else if(event.key.toLowerCase()==='f')document.getElementById('fullscreen').click();
+    else if(event.key.toLowerCase()==='h')help.classList.toggle('open');
+    else if(event.key==='Escape')help.classList.remove('open');
+  });
+
+  updateReadingState();
+})();
+</script>
+</body>
+</html>

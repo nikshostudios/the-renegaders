@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "sample_count": 200,
+  "metrics": {
+    "hit_rate_at_10": 0.935,
+    "mrr": 0.600468,
+    "mttc": 2.945,
+    "efficiency": 0.8055,
+    "recommended_technical_score": 0.80874
+  },
+  "runtime_tree_sha256": "682dff7cc54c4793d04a195afc48cab0a07a93b5dc4a0855a02eee42c45b3035",
+  "runtime_files": {
+    "demo.py": "a84baf2a60fccaf4ed3933ca11568973af819d782d52931b57138536cb0a1f5c",
+    "evaluator/freeze_manifest.py": "d829684ac11818c069a19992377e50e1be704a8f20adc41450aa4fef5611ab21",
+    "evaluator/local_evaluator.py": "79a5ea06f9a1b8c5036f30efa85dc1f36b8f6b06eb8feb8f545dfa767bc45564",
+    "evaluator/performance_probe.py": "8a9024012728ee7b1a19f3938fd2ff2336d4a56138fb90ecc17f727a47d7f6b1",
+    "evaluator/result_comparison.py": "bb290598f2690078b1ff1e245ad99b2fd9283a1dfa3c0897d98697474fafbb4b",
+    "starter/agent.py": "f88498ff1f8291dab53fe90c0404526e2fad1c734407432fbc227a9799074242"
+  },
+  "result_sha256": "5386560e643c3d4e2a73281b5bcce6e5ffd4ed05540fa9cc7db6c86657b764a8"
+}

@@ -30,6 +30,14 @@ python3 -m evaluator.result_comparison \
 
 The comparison reports aggregate deltas plus the exact sessions that were fixed, broken, ranked higher, ranked lower, reached earlier, or reached later. Both result files are ignored and must remain local.
 
+After selecting the final runtime, create a receipt that proves which files and complete result were frozen without exposing per-session data:
+
+```bash
+python3 -m evaluator.freeze_manifest \
+  --result results.json \
+  --output results/freeze-manifest.json
+```
+
 ## Change workflow
 
 1. Create a short-lived branch from `main`.

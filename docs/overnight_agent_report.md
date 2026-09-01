@@ -38,7 +38,13 @@ python3 -m evaluator.performance_probe --output performance.json
 
 The authorized organizer catalog must be present at `data/catalog.jsonl`. It is intentionally excluded from this repository.
 
-The separate local timing probe measured index construction and 576 responses across the 200 public sessions. On Python 3.11.3 with SQLite 3.40.1, index construction took 1.485 seconds. Response latency was 22.68 ms at p50, meaning half of responses were faster, and 49.35 ms at p95, meaning 95% were faster. The maximum observed response was 79.57 ms. Timing varies by host.
+The separate local timing probe measured index construction and 576 responses
+across the 200 public sessions. On Python 3.11.3 with SQLite 3.40.1, one run
+measured a 1.485-second index build, 22.68 ms p50, 49.35 ms p95, and 79.57 ms
+maximum. A later verification run measured a 2.654-second index build, 46.49 ms
+p50, 179.66 ms p95, and a 1,082.22 ms maximum outlier while preserving the
+0.808740 technical score. Timing varies materially with host load, so these are
+feasibility measurements rather than guarantees.
 
 ## Rejected local state and ranking experiments
 
@@ -52,6 +58,36 @@ A diagnostic failure-cohort probe reranked lexical top-50 candidates using `nomi
 
 The probe code, local-model dependency, and raw probe output are deliberately excluded from this collaboration repository because they are not required by the verified Agent.
 
+## Post-freeze challenge experiments
+
+After the 0.808740 result was selected, the 13 remaining misses were traced through a deeper 500-product pool. Every target remained lexically retrievable. Six reached reranked positions 11 to 50 and seven reached positions 51 to 500.
+
+Four isolated follow-up checks did not beat the frozen Agent:
+
+| Experiment | Technical score | Fixed misses | Broken hits | Decision |
+| --- | ---: | ---: | ---: | --- |
+| Candidate pool 100 | 0.808740 | 0 | 0 | Reject, no session changed |
+| Candidate pool 200 | 0.808740 | 0 | 0 | Reject, no session changed |
+| Full-context plus focused query route | 0.803026 | 0 | 1 | Reject |
+| Discount very common reranker terms | 0.794407 | 0 | 3 | Reject |
+| Open-ended intent route with one extra broad question | 0.808440 | 0 | 0 | Reject, three existing hits arrived one turn later |
+
+The pool-depth wiring was checked directly: the reranker received 50, 100, and 200 rows respectively. The identical pool results were therefore genuine, not a configuration failure.
+
+The Issue 3 intent-routing prototype classified an opener as constraint-bearing
+or open-ended using only observable language. It preserved the broad `other`
+question but gave open-ended sessions one additional clarification turn. A
+feature-off run reproduced the frozen complete result exactly, SHA256
+`5386560e643c3d4e2a73281b5bcce6e5ffd4ed05540fa9cc7db6c86657b764a8`.
+With routing enabled, Hit Rate@10 and MRR were unchanged, three existing hits
+arrived one turn later, MTTC worsened from 2.945 to 2.960, and technical score
+fell from 0.808740 to 0.808440. The candidate was rejected and the frozen
+question policy was retained.
+
+A final negative-preference penalty was considered but stopped before implementation. The released simulator creates the earlier preference from the target product itself. Across all 30 Intent Override sessions, every earlier preference overlapped the correct target, 29 had all extracted terms in the target, and no override message named the earlier value directly. Penalizing that evidence would attack the correct product without a reliable value to identify.
+
+The runtime was frozen after these checks. A fresh complete run matched the selected 200-session output byte for byte. Twenty catalog-free tests now cover the Agent, evaluator, result comparison, determinism, hidden-metadata isolation, and freeze receipt.
+
 ## Limitations
 
 - Scores use the 200 public sessions, not the organizer's 800 private sessions.
@@ -59,4 +95,5 @@ The probe code, local-model dependency, and raw probe output are deliberately ex
 - Common categories with generic material and closure constraints remain difficult to distinguish lexically.
 - Intent-change messages add the new requirement but do not fully remove every earlier preference from retrieval.
 - The reranker was selected on the 200-session public set. No private-set behavior is verified.
+- Buying-versus-Browsing question routing and profile personalization were not promoted because the remaining failures did not provide evidence that either would improve the protected score, while the broad `other` question was already measurably productive.
 - No private data, product transactions, user interface, multimodal behavior, or live model was tested.
